@@ -20,7 +20,7 @@ NuggetMD occupies a distinct position between FlashMD and LearnMD:
 | Memory type | Declarative — *knowing that* | Procedural — *knowing how / when* | Structured instruction |
 | File structure | Many cards per file | Many nuggets per file | One document per file |
 
-NuggetMD inherits its frontmatter and validation rules from the shared [LearnSpec Architecture Charter](https://github.com/learnspec/.github/blob/main/CHARTER.md).
+NuggetMD inherits its frontmatter and validation rules from the shared [LearnSpec Architecture Charter](https://learnspec.org/charter/).
 
 | Principle | Description |
 |---|---|
