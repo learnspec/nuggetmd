@@ -1,7 +1,8 @@
-# NuggetMD — Format Specification v0.2
+# NuggetMD — Format Specification v0.3
 
 > Part of the **LearnSpec** suite  
-> Status: Draft — June 14, 2026
+> Status: Draft — August 17, 2026  
+> Previous version: v0.2
 
 ---
 
@@ -39,13 +40,13 @@ NuggetMD inherits its frontmatter and validation rules from the shared [LearnSpe
 |---|---|---|
 | 0 | `##` headings + `###` sub-sections | Nugget collection, readable everywhere |
 | 1 | YAML frontmatter + per-nugget `nugget` block | Metadata, FSRS, per-nugget attributes |
-| 2 | `### Check` recall question (QuizMD Level 0 syntax) | FSRS review mechanism |
+| 2 | Recall question in the third `###` section (QuizMD Level 0 syntax) | FSRS review mechanism |
 
 ---
 
 ## Level 0 — Heading-Based Structure
 
-Each nugget is a `##` heading. Its three sub-sections are `###` headings with fixed labels. The file reads as a natural Markdown document — no tooling required.
+Each nugget is a `##` heading. Its sub-sections are `###` headings, and **their order carries their role** — the labels themselves are free text, in any language. The file reads as a natural Markdown document — no tooling required.
 
 ```markdown
 # Python Best Practices
@@ -82,13 +83,46 @@ the intent immediately clear and eliminates off-by-one errors.
 
 - The **`# H1`** is the file title — optional, inferred from frontmatter `title` if absent.
 - Each **`## H2`** heading opens one nugget. The heading text is the nugget title.
-- Inside each nugget, up to three **`### H3`** sub-sections with fixed labels:
+- Inside each nugget, up to three **`### H3`** sub-sections. **Position determines the role**; the heading text is free:
 
-| Sub-section | Heading label | Required | Purpose |
+| Position | Role | Required | Purpose |
 |---|---|---|---|
-| Concept | `### Concept` | **Yes** | The concept, explained in 2–5 sentences |
-| Why it matters | `### Why it matters` | **Yes** | One concrete example or actionable takeaway |
-| Check | `### Check` | No — strongly recommended when FSRS is active | One recall question |
+| 1st `###` | Concept | **Yes** | The concept, explained in 2–5 sentences |
+| 2nd `###` | Why it matters | **Yes** | One concrete example or actionable takeaway |
+| 3rd `###` | Check | No — strongly recommended when FSRS is active | One recall question |
+
+- **Labels are not parsed.** `### Concept`, `### Le concept` and `### Was ist das?`
+  are all the first section. A parser takes the first three `###` headings of a
+  nugget in document order and assigns the roles above; it never matches on the
+  heading text. `Concept` / `Why it matters` / `Check` remain the recommended
+  English labels for interchange, and files written against v0.2 parse
+  identically under this rule.
+- A fourth or further `###` inside a nugget carries no role: it is a warning,
+  and players render its content as part of the nugget after the third section.
+
+The same nugget, authored in French — no marker changes, and a parser needs no
+knowledge of French:
+
+```markdown
+## Préférer enumerate() à range(len())
+
+### Le concept
+
+Quand on parcourt une liste en ayant besoin de l'indice *et* de la valeur,
+`enumerate()` est la façon idiomatique de le faire en Python.
+
+### Pourquoi c'est important
+
+La prochaine fois que vous écrivez `for i in range(len(...))`, demandez-vous
+si vous avez besoin des deux. Si oui, passez à `enumerate()`.
+
+### Question de rappel
+
+? Quelle fonction native donne à la fois l'indice et la valeur ?
+
+- [x] enumerate()
+- [ ] range(len())
+```
 
 - A **`---` horizontal rule** between nuggets is optional but strongly recommended for visual clarity.
 - No `####` or deeper headings inside a nugget — if more structure is needed, the content belongs in LearnMD.
@@ -176,13 +210,13 @@ lesson: ./03-iteration.learn.md   # default for every nugget in the file
 
 The nugget above links to the `the-enumerate-builtin` section of the default lesson; a nugget with no `lesson` links to the lesson's top, and `lesson:./other.learn.md#x` overrides the target entirely.
 
-**Player behaviour.** The player SHOULD surface the reference as a "back to the lesson" link (typically after the `### Check`), open the target **within its track context** when one exists (falling back to the standalone lesson view), and — if it navigates in place — make returning to the review session obvious. The `#anchor` SHOULD resolve to a stable identifier (`!checkpoint` id or explicit heading anchor) before falling back to the heading slug.
+**Player behaviour.** The player SHOULD surface the reference as a "back to the lesson" link (typically after the third section), open the target **within its track context** when one exists (falling back to the standalone lesson view), and — if it navigates in place — make returning to the review session obvious. The `#anchor` SHOULD resolve to a stable identifier (`!checkpoint` id or explicit heading anchor) before falling back to the heading slug.
 
 ---
 
 ## Level 2 — Recall Question
 
-The `### Check` section contains a single recall question in **QuizMD Level 0 syntax** — no fenced block wrapper, no scoring configuration.
+The third `###` section — conventionally labelled `### Check` — contains a single recall question in **QuizMD Level 0 syntax**: no fenced block wrapper, no scoring configuration.
 
 ```markdown
 ### Check
@@ -401,15 +435,14 @@ FlashMD and NuggetMD feed **separate FSRS queues** — never mixed:
 | Condition | Level |
 |---|---|
 | `lang` absent from frontmatter | Warning |
-| `### Concept` missing from a nugget | Error |
-| `### Why it matters` missing from a nugget | Error |
-| More than one `### Check` question in a single nugget | Error |
+| Fewer than two `###` sections in a nugget | Error |
+| More than one recall question in the third `###` section | Error |
 | Duplicate `id` within the file | Error |
-| `### Check` missing when `spaced_repetition` is active on that nugget | Warning |
+| No third `###` section when `spaced_repetition` is active on that nugget | Warning |
 | Estimated reading time of a nugget > 2.5 min | Warning |
 | Estimated reading time of a nugget > 3 min | **Error** |
 | `####` or deeper heading inside a nugget | Warning |
-| `### H3` with a label other than `Concept`, `Why it matters`, `Check` | Warning |
+| More than three `###` sections in a nugget | Warning |
 | `lesson` value whose path does not end in `.learn.md` | Error |
 | Nugget `lesson:#anchor` (anchor-only) with no file-level `lesson` default to resolve it | Error |
 | `lesson` anchor not found in the target lesson | Warning — checked by the collection-level validator (cross-file) |
@@ -428,7 +461,10 @@ All warnings are promoted to errors.
 | Audio / video nuggets | Binary content outside Markdown scope |
 | Cross-file `related` resolution | Requires corpus-level indexing — player concern |
 
-> v0.2 added the `lesson` reference (links a nugget back to its source lesson section).
+> v0.3 made the `###` sub-sections **positional**: their role comes from their
+> order, not from fixed English labels, so a nugget can be authored in any
+> language. v0.2 added the `lesson` reference (links a nugget back to its source
+> lesson section).
 
 ---
 
